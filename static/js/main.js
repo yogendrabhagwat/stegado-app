@@ -100,11 +100,33 @@ function setupDragDrop(zoneId, inputId, onFile) {
         });
     });
 
-    // 3D file drag-drop zone
-    setupDragDrop('secret-3d-drop-zone', 'secret-3d-input', f => {
-        document.getElementById('secret-3d-filename').textContent = '✅ ' + f.name;
-        document.getElementById('secret-3d-drop-zone').style.borderColor = 'var(--accent)';
-    });
+    // 3D file zone — dynamic input to bypass Windows 'Image files' filter caching
+    const _zone3d = document.getElementById('secret-3d-drop-zone');
+    if (_zone3d) {
+        function _pick3dFile() {
+            const tmp = document.createElement('input');
+            tmp.type = 'file'; // NO accept → shows ALL file types
+            tmp.onchange = e => {
+                const f = e.target.files[0];
+                if (!f) return;
+                window._secret3dFile = f;
+                document.getElementById('secret-3d-filename').textContent = '✅ ' + f.name;
+                _zone3d.style.borderColor = 'var(--accent)';
+            };
+            tmp.click();
+        }
+        _zone3d.addEventListener('click', _pick3dFile);
+        _zone3d.addEventListener('dragover', e => { e.preventDefault(); _zone3d.classList.add('dragover'); });
+        _zone3d.addEventListener('dragleave', () => _zone3d.classList.remove('dragover'));
+        _zone3d.addEventListener('drop', e => {
+            e.preventDefault(); _zone3d.classList.remove('dragover');
+            const f = e.dataTransfer.files[0];
+            if (!f) return;
+            window._secret3dFile = f;
+            document.getElementById('secret-3d-filename').textContent = '✅ ' + f.name;
+            _zone3d.style.borderColor = 'var(--accent)';
+        });
+    }
 
     // Submit
     document.getElementById('btn-hide')?.addEventListener('click', async () => {
@@ -130,8 +152,8 @@ function setupDragDrop(zoneId, inputId, onFile) {
             if (!f) { showToast('Please select a secret image.', 'error'); return; }
             fd.append('secret_image', f);
         } else if (secretType === '3d') {
-            const f = document.getElementById('secret-3d-input')?.files[0];
-            if (!f) { showToast('Please select a 3D data file.', 'error'); return; }
+            const f = window._secret3dFile || document.getElementById('secret-3d-input')?.files[0];
+            if (!f) { showToast('Please select or drop a 3D data file.', 'error'); return; }
             fd.append('secret_3d', f);
         }
 
