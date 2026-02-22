@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Extract Secret – Stegado{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="app-container">
+
+        <header class="app-header">
+            <h1>Stegado<span class="accent">.</span></h1>
+            <p>Reveal the hidden secret from a stego image.</p>
+        </header>
+
+        <div id="extract-form">
+
+            <!-- Step 1: Stego Image -->
+            <div class="glass-panel">
+                <p class="section-title">1. Stego Image</p>
+
+                <div class="drop-zone" id="stego-drop-zone">
+                    <div class="icon-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                    </div>
+                    <p>Drop stego PNG here or <span class="accent-text">browse</span></p>
+                    <p style="font-size:0.78rem;margin-top:6px;color:var(--text-secondary)">PNG files only</p>
+                    <input type="file" id="stego-file-input" accept="image/png" hidden>
+                </div>
+
+                <div class="input-group hidden" id="stego-step-2">
+                    <div class="preview-container">
+                        <img id="stego-preview" src="" alt="Stego Preview">
+                        <div class="file-info">
+                            <span id="stego-filename">stego.png</span>
+                            <button class="icon-btn" id="clear-stego" title="Remove">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Password -->
+            <div class="glass-panel" style="margin-top:16px">
+                <p class="section-title">2. AES-256 Password</p>
+                <input type="password" id="extract-password" placeholder="Enter the AES password used when hiding"
+                    autocomplete="current-password">
+            </div>
+
+            <!-- Step 3: Extract -->
+            <div class="glass-panel" style="margin-top:16px">
+                <button class="action-btn" id="btn-extract">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <span>Reveal Secret</span>
+                </button>
+            </div>
+
+            <!-- Result -->
+            <div id="extract-result" class="glass-panel hidden" style="margin-top:16px">
+                <div class="success-message">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span>Secret Extracted!</span>
+                </div>
+
+                <!-- Text result -->
+                <div id="result-type-text" class="hidden">
+                    <label class="field-label">Hidden Text Message</label>
+                    <div class="decoded-text" id="decoded-message"></div>
+                    <button class="action-btn secondary" style="margin-top:12px"
+                        onclick="navigator.clipboard.writeText(document.getElementById('decoded-message').textContent)">
+                        📋 Copy to Clipboard
+                    </button>
+                </div>
+
+                <!-- Image result -->
+                <div id="result-type-image" class="hidden">
+                    <label class="field-label">Hidden Image</label>
+                    <div class="result-image">
+                        <img id="decoded-image" src="" alt="Decoded secret image">
+                    </div>
+                    <a id="download-decoded-img" class="action-btn success-btn" style="margin-top:12px"
+                        download="secret_image.jpg">
+                        Download Secret Image
+                    </a>
+                </div>
+
+                <!-- 3D result -->
+                <div id="result-type-3d" class="hidden">
+                    <label class="field-label">Extracted 3D Data</label>
+                    <div class="decoded-text" id="decoded-3d-info"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Wire decoded image download
+    document.getElementById('decoded-image')?.addEventListener('load', function () {
+        const dl = document.getElementById('download-decoded-img');
+        if (dl) dl.href = this.src;
+    });
+</script>
+{% endblock %}

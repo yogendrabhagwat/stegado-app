@@ -1,0 +1,10 @@
+instance/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.db
+saved_models/
+*.pth
+.pytest_cache/

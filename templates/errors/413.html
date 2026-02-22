@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block title %}413 – File Too Large – Stegado{% endblock %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="app-container" style="text-align:center">
+        <div class="error-code">413</div>
+        <p class="error-msg">File too large. Maximum upload size is 32 MB.</p>
+        <a href="{{ url_for('hide.hide_page') }}" class="action-btn"
+            style="width:auto;display:inline-flex;padding:12px 28px">Try Again</a>
+    </div>
+</div>{% endblock %}

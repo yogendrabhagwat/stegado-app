@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Hide Secret – Stegado{% endblock %}
+{% block meta_desc %}Embed encrypted secrets into images using AI steganography.{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="app-container">
+
+        <header class="app-header">
+            <h1>Stegado<span class="accent">.</span></h1>
+            <p>Hide a secret inside your image — encrypted &amp; AI-secured.</p>
+        </header>
+
+        <div id="hide-form">
+
+            <!-- Step 1: Cover Image Upload -->
+            <div class="glass-panel">
+                <p class="section-title">1. Cover Image</p>
+
+                <div class="drop-zone" id="cover-drop-zone">
+                    <div class="icon-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                    </div>
+                    <p>Drop cover image here or <span class="accent-text">browse</span></p>
+                    <p style="font-size:0.78rem;margin-top:6px;color:var(--text-secondary)">PNG, JPG, JPEG, BMP, WebP
+                    </p>
+                    <input type="file" id="cover-file-input" accept="image/*" hidden>
+                </div>
+
+                <div class="input-group hidden" id="cover-step-2">
+                    <div class="preview-container">
+                        <img id="cover-preview" src="" alt="Preview">
+                        <div class="file-info">
+                            <span id="cover-filename">image.png</span>
+                            <button class="icon-btn" id="clear-cover" title="Remove">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Options -->
+            <div class="glass-panel" style="margin-top:16px">
+                <p class="section-title">2. Mode &amp; Secret Type</p>
+
+                <div style="margin-bottom:14px">
+                    <label class="field-label">Cover Mode</label>
+                    <div class="segment-group">
+                        <input type="radio" name="cover_mode" id="mode-universal" value="Universal" checked>
+                        <label for="mode-universal">🌐 Universal</label>
+                        <input type="radio" name="cover_mode" id="mode-2d" value="2D">
+                        <label for="mode-2d">🖼 2D</label>
+                        <input type="radio" name="cover_mode" id="mode-3d" value="3D">
+                        <label for="mode-3d">🧊 3D</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-label">Secret Type</label>
+                    <div class="segment-group">
+                        <input type="radio" name="secret_type" id="stype-text" value="text" checked>
+                        <label for="stype-text">📝 Text</label>
+                        <input type="radio" name="secret_type" id="stype-image" value="image">
+                        <label for="stype-image">🖼 Image</label>
+                        <input type="radio" name="secret_type" id="stype-3d" value="3d">
+                        <label for="stype-3d">🧊 3D Data</label>
+                    </div>
+                </div>
+
+                <!-- Secret input areas -->
+                <div id="secret-text-area" style="margin-top:14px">
+                    <label class="field-label" for="secret-text">Secret Message</label>
+                    <textarea id="secret-text" rows="4" placeholder="Type your secret message here…"></textarea>
+                </div>
+
+                <div id="secret-image-area" class="hidden" style="margin-top:14px">
+                    <label class="field-label">Secret Image</label>
+                    <input type="file" id="secret-image-input" accept="image/png,image/jpeg,image/jpg,image/bmp"
+                        style="padding:10px">
+                </div>
+
+                <div id="secret-3d-area" class="hidden" style="margin-top:14px">
+                    <label class="field-label">3D / Voxel Data File (.npy or binary)</label>
+                    <input type="file" id="secret-3d-input" style="padding:10px">
+                </div>
+            </div>
+
+            <!-- Step 3: Password & Embed -->
+            <div class="glass-panel" style="margin-top:16px">
+                <p class="section-title">3. Encrypt &amp; Embed</p>
+
+                <div style="margin-bottom:6px">
+                    <label class="field-label" for="aes-password">AES-256 Password</label>
+                    <input type="password" id="aes-password" placeholder="Strong password for encryption"
+                        autocomplete="new-password">
+                    <div class="strength-bar-wrap">
+                        <div class="strength-bar" id="aes-strength-bar"></div>
+                    </div>
+                    <div class="strength-label" id="aes-strength-label"
+                        style="color:var(--text-secondary);font-size:0.75rem;margin-top:4px"></div>
+                </div>
+
+                <button class="action-btn" id="btn-hide" style="margin-top:16px">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <span>Hide Secret</span>
+                </button>
+            </div>
+
+            <!-- Result -->
+            <div id="hide-result" class="glass-panel hidden" style="margin-top:16px">
+                <div class="success-message">
+                    <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span>Secret Successfully Hidden!</span>
+                </div>
+
+                <div class="stego-preview">
+                    <img id="result-stego-img" src="" alt="Stego Image">
+                </div>
+
+                <div class="metrics-strip">
+                    <div class="metric-box">
+                        <div class="metric-label">PSNR</div>
+                        <div class="metric-value good" id="metric-psnr">—</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">SSIM</div>
+                        <div class="metric-value good" id="metric-ssim">—</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Robustness</div>
+                        <div class="metric-value good" id="metric-robust">—</div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin-top:12px">
+                    <span class="model-badge" id="model-badge-text">Universal Model</span>
+                </div>
+
+                <div class="btn-row" style="margin-top:16px">
+                    <a id="download-stego" class="action-btn success-btn" download="stego.png">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Download PNG
+                    </a>
+                    <button class="action-btn secondary" id="btn-share">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <circle cx="18" cy="5" r="3" />
+                            <circle cx="6" cy="12" r="3" />
+                            <circle cx="18" cy="19" r="3" />
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                        </svg>
+                        Share
+                    </button>
+                </div>
+            </div>
+        </div><!-- /#hide-form -->
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stegado – AI Steganography{% endblock %}</title>
+    <meta name="description" content="{% block meta_desc %}Advanced AI-powered steganography: hide secrets in images with AES-256 encryption and GAN-based security.{% endblock %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Background Blobs (Preserved animation) -->
+<div class="background-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-container">
+    {% for cat, msg in messages %}
+    <div class="flash-msg {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- Top Navigation -->
+<nav class="topnav">
+    <a href="{{ url_for('index') }}" class="topnav-brand">
+        Stegado<span class="accent">.</span>
+    </a>
+    <div class="topnav-links">
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('hide.hide_page') }}"    {% if request.blueprint == 'hide'    %}class="active"{% endif %}>🔒 Hide</a>
+            <a href="{{ url_for('extract.extract_page') }}" {% if request.blueprint == 'extract' %}class="active"{% endif %}>🔍 Extract</a>
+            <a href="{{ url_for('history.history_page') }}" {% if request.blueprint == 'history' %}class="active"{% endif %}>📋 History</a>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}"  {% if request.endpoint == 'auth.login'  %}class="active"{% endif %}>Login</a>
+            <a href="{{ url_for('auth.signup') }}" {% if request.endpoint == 'auth.signup' %}class="active"{% endif %}>Sign Up</a>
+        {% endif %}
+    </div>
+    {% if current_user.is_authenticated %}
+    <div class="topnav-user">
+        <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+        <span class="user-name">{{ current_user.username }}</span>
+        <a href="{{ url_for('auth.logout') }}" class="nav-logout">Logout</a>
+    </div>
+    {% endif %}
+</nav>
+
+<!-- Page Content -->
+{% block content %}{% endblock %}
+
+<script src="{{ url_for('static', filename='js/steganography.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>
