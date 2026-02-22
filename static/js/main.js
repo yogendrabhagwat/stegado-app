@@ -100,6 +100,12 @@ function setupDragDrop(zoneId, inputId, onFile) {
         });
     });
 
+    // 3D file drag-drop zone
+    setupDragDrop('secret-3d-drop-zone', 'secret-3d-input', f => {
+        document.getElementById('secret-3d-filename').textContent = '✅ ' + f.name;
+        document.getElementById('secret-3d-drop-zone').style.borderColor = 'var(--accent)';
+    });
+
     // Submit
     document.getElementById('btn-hide')?.addEventListener('click', async () => {
         if (!coverFile) { showToast('Please upload a cover image.', 'error'); return; }
@@ -214,6 +220,8 @@ function setupDragDrop(zoneId, inputId, onFile) {
                 show('result-type-image');
             } else {
                 document.getElementById('decoded-3d-info').textContent = result.content;
+                // Store data for download button
+                window._3dData = { data: result.data, ext: result.ext };
                 show('result-type-3d');
             }
             show('extract-result');

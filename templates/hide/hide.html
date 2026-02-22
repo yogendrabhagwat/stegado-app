@@ -90,8 +90,21 @@
                 </div>
 
                 <div id="secret-3d-area" class="hidden" style="margin-top:14px">
-                    <label class="field-label">3D / Voxel Data File (.npy or binary)</label>
-                    <input type="file" id="secret-3d-input" style="padding:10px">
+                    <label class="field-label">3D / Voxel Data File</label>
+                    <div class="drop-zone" id="secret-3d-drop-zone" style="padding:20px">
+                        <div class="icon-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            </svg>
+                        </div>
+                        <p>Drop .npy or binary file here or <span class="accent-text">browse</span></p>
+                        <p style="font-size:0.78rem;margin-top:4px;color:var(--text-secondary)" id="secret-3d-filename">
+                            .npy, .bin or any binary file
+                        </p>
+                        <input type="file" id="secret-3d-input" hidden>
+                    </div>
                 </div>
             </div>
 

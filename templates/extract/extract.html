@@ -49,8 +49,8 @@
 
             <!-- Step 2: Password -->
             <div class="glass-panel" style="margin-top:16px">
-                <p class="section-title">2. AES-256 Password</p>
-                <input type="password" id="extract-password" placeholder="Enter the AES password used when hiding"
+                <p class="section-title">2. Neural Password</p>
+                <input type="password" id="extract-password" placeholder="Enter the password used when hiding"
                     autocomplete="current-password">
             </div>
 
@@ -79,10 +79,14 @@
                 <div id="result-type-text" class="hidden">
                     <label class="field-label">Hidden Text Message</label>
                     <div class="decoded-text" id="decoded-message"></div>
-                    <button class="action-btn secondary" style="margin-top:12px"
-                        onclick="navigator.clipboard.writeText(document.getElementById('decoded-message').textContent)">
-                        📋 Copy to Clipboard
-                    </button>
+                    <div class="btn-row" style="margin-top:12px">
+                        <button class="action-btn secondary" onclick="copyDecodedText()">
+                            📋 Copy
+                        </button>
+                        <button class="action-btn secondary" onclick="downloadDecodedText()">
+                            ⬇️ Download .txt
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Image result -->
@@ -91,9 +95,9 @@
                     <div class="result-image">
                         <img id="decoded-image" src="" alt="Decoded secret image">
                     </div>
-                    <a id="download-decoded-img" class="action-btn success-btn" style="margin-top:12px"
-                        download="secret_image.jpg">
-                        Download Secret Image
+                    <a id="download-decoded-img" class="action-btn success-btn"
+                        style="margin-top:12px;display:inline-flex" download="secret_image.jpg">
+                        ⬇️ Download Secret Image
                     </a>
                 </div>
 
@@ -101,6 +105,11 @@
                 <div id="result-type-3d" class="hidden">
                     <label class="field-label">Extracted 3D Data</label>
                     <div class="decoded-text" id="decoded-3d-info"></div>
+                    <div class="btn-row" style="margin-top:12px">
+                        <button class="action-btn success-btn" onclick="download3DData()">
+                            ⬇️ Download 3D File
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -111,7 +120,32 @@
 
 {% block extra_js %}
 <script>
-    // Wire decoded image download
+    function copyDecodedText() {
+        const txt = document.getElementById('decoded-message')?.textContent;
+        if (txt) navigator.clipboard.writeText(txt).then(() => showToast('Copied!', 'info'));
+    }
+
+    function downloadDecodedText() {
+        const txt = document.getElementById('decoded-message')?.textContent;
+        if (!txt) return;
+        const blob = new Blob([txt], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'secret_message.txt'; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function download3DData() {
+        const d = window._3dData;
+        if (!d) { showToast('No 3D data available.', 'error'); return; }
+        const bytes = Uint8Array.from(atob(d.data), c => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'extracted_3d.' + (d.ext || 'bin'); a.click();
+        URL.revokeObjectURL(url);
+    }
+
     document.getElementById('decoded-image')?.addEventListener('load', function () {
         const dl = document.getElementById('download-decoded-img');
         if (dl) dl.href = this.src;

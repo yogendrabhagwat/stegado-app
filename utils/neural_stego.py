@@ -83,27 +83,57 @@ def _pw_seed(password: str) -> int:
 
 class AttentionNet(nn.Module):
     """
-    5-layer CNN producing a per-pixel importance map [0, 1].
-    Weights are randomly initialized and fully seeded by the password.
-    NO training required — the network drives position selection, not quality.
+    Strong U-Net style CNN with skip connections — 11 layers deep.
+    Produces a per-pixel importance map [0, 1].
+    Skip connections allow the network to combine both low-level textures
+    and high-level semantic regions for better embedding position selection.
+    Weights are fully seeded by password (NO training required).
     """
     def __init__(self):
         super().__init__()
-        self.net = nn.Sequential(
-            nn.Conv2d(3, 32, 3, padding=1, bias=False),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 64, 3, padding=1, bias=False),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, 3, padding=1, bias=False),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 32, 3, padding=1, bias=False),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 1, 1, bias=False),
+        # Encoder
+        self.e1 = nn.Sequential(
+            nn.Conv2d(3, 32, 3, padding=1, bias=False), nn.ReLU(inplace=True),
+            nn.Conv2d(32, 32, 3, padding=1, bias=False), nn.ReLU(inplace=True),
+        )
+        self.e2 = nn.Sequential(
+            nn.Conv2d(32, 64, 3, padding=1, bias=False), nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, 3, padding=1, bias=False), nn.ReLU(inplace=True),
+        )
+        self.e3 = nn.Sequential(
+            nn.Conv2d(64, 128, 3, padding=1, bias=False), nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, 3, padding=1, bias=False), nn.ReLU(inplace=True),
+        )
+        # Bottleneck
+        self.bot = nn.Sequential(
+            nn.Conv2d(128, 256, 3, padding=1, bias=False), nn.ReLU(inplace=True),
+            nn.Conv2d(256, 128, 3, padding=1, bias=False), nn.ReLU(inplace=True),
+        )
+        # Decoder with skip connections
+        self.d3 = nn.Sequential(
+            nn.Conv2d(256, 64, 3, padding=1, bias=False), nn.ReLU(inplace=True),  # 128+128
+        )
+        self.d2 = nn.Sequential(
+            nn.Conv2d(128, 32, 3, padding=1, bias=False), nn.ReLU(inplace=True),  # 64+64
+        )
+        self.d1 = nn.Sequential(
+            nn.Conv2d(64, 16, 3, padding=1, bias=False), nn.ReLU(inplace=True),   # 32+32
+        )
+        self.out = nn.Sequential(
+            nn.Conv2d(16, 1, 1, bias=False),
             nn.Sigmoid(),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x)
+        import torch
+        e1 = self.e1(x)                           # (B, 32, H, W)
+        e2 = self.e2(e1)                          # (B, 64, H, W)
+        e3 = self.e3(e2)                          # (B, 128, H, W)
+        b  = self.bot(e3)                         # (B, 128, H, W)
+        d3 = self.d3(torch.cat([b, e3], dim=1))   # (B, 64, H, W)
+        d2 = self.d2(torch.cat([d3, e2], dim=1))  # (B, 32, H, W)
+        d1 = self.d1(torch.cat([d2, e1], dim=1))  # (B, 16, H, W)
+        return self.out(d1)                        # (B, 1, H, W)
 
 
 def _neural_ranking(H: int, W: int, password: str) -> np.ndarray:
@@ -333,13 +363,21 @@ def secret_3d_to_bytes(data_file) -> bytes:
         return b'3DR:' + data_file.read(8192)
 
 def bytes_to_secret(data: bytes) -> dict:
+    import base64
     if data[:4] == b'TXT:':
         return {'type': 'text', 'content': data[4:].decode('utf-8', errors='replace')}
     elif data[:4] == b'IMG:':
-        import base64
         return {'type': 'image', 'content': 'data:image/jpeg;base64,' + base64.b64encode(data[4:]).decode()}
     elif data[:4] in (b'3DV:', b'3DR:'):
-        return {'type': '3d', 'content': f'3D data ({len(data)-4} bytes extracted)'}
+        raw = data[4:]
+        b64 = base64.b64encode(raw).decode()
+        ext = 'npy' if data[:4] == b'3DV:' else 'bin'
+        return {
+            'type': '3d',
+            'content': f'3D data ({len(raw):,} bytes extracted)',
+            'data': b64,
+            'ext': ext,
+        }
     return {'type': 'text', 'content': data.decode('utf-8', errors='replace')}
 
 def compute_robustness_score(psnr: float, ssim: float) -> float:
