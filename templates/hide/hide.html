@@ -26,10 +26,11 @@
                             <line x1="12" y1="3" x2="12" y2="15" />
                         </svg>
                     </div>
-                    <p>Drop cover image here or <span class="accent-text">browse</span></p>
-                    <p style="font-size:0.78rem;margin-top:6px;color:var(--text-secondary)">PNG, JPG, JPEG, BMP, WebP
+                    <p>Drop cover image or 3D file here or <span class="accent-text">browse</span></p>
+                    <p style="font-size:0.78rem;margin-top:6px;color:var(--text-secondary)">Images: PNG, JPG, BMP, WebP
+                        &nbsp;|&nbsp; 3D: .obj .npy .bin .ply
                     </p>
-                    <input type="file" id="cover-file-input" accept="image/*" hidden>
+                    <input type="file" id="cover-file-input" accept="image/*,.obj,.npy,.npz,.bin,.ply,.stl,.glb" hidden>
                 </div>
 
                 <div class="input-group hidden" id="cover-step-2">
@@ -171,15 +172,21 @@
                 </div>
 
                 <div class="btn-row" style="margin-top:16px">
-                    <a id="download-stego" class="action-btn success-btn" download="stego.png">
+                    <!-- Image stego download (shown for image cover) -->
+                    <a id="download-stego" class="action-btn success-btn" download="stego.png" style="display:none">
                         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
                             viewBox="0 0 24 24">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
                         </svg>
-                        Download PNG
+                        Download Stego PNG
                     </a>
+                    <!-- 3D stego download (shown for 3D cover) -->
+                    <button id="download-stego-3d" class="action-btn success-btn" style="display:none"
+                        onclick="downloadStego3D()">
+                        ⬇️ Download Stego 3D File
+                    </button>
                     <button class="action-btn secondary" id="btn-share">
                         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
                             viewBox="0 0 24 24">

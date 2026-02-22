@@ -71,12 +71,25 @@ function setupDragDrop(zoneId, inputId, onFile) {
 
     // Cover drop
     setupDragDrop('cover-drop-zone', 'cover-file-input', f => {
-        if (!f.type.match(/image\/.*/)) { showToast('Please select a valid image.', 'error'); return; }
+        const ext = f.name.split('.').pop().toLowerCase();
+        const imgExts = ['png', 'jpg', 'jpeg', 'bmp', 'webp'];
+        const ext3d = ['obj', 'npy', 'npz', 'bin', 'ply', 'stl', 'glb', 'fbx'];
+        const isImg = f.type.match(/image\/.*/) || imgExts.includes(ext);
+        const is3d = ext3d.includes(ext);
+        if (!isImg && !is3d) { showToast('Please select a valid image or 3D file.', 'error'); return; }
+
         coverFile = f;
         document.getElementById('cover-filename').textContent = f.name;
-        const reader = new FileReader();
-        reader.onload = e => document.getElementById('cover-preview').src = e.target.result;
-        reader.readAsDataURL(f);
+
+        if (isImg) {
+            const reader = new FileReader();
+            reader.onload = e => document.getElementById('cover-preview').src = e.target.result;
+            reader.readAsDataURL(f);
+        } else {
+            // 3D file — show icon instead of image preview
+            document.getElementById('cover-preview').src =
+                'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="%236366f1" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>';
+        }
         show('cover-step-2');
         hide('cover-drop-zone');
         hide('hide-result');
@@ -164,17 +177,30 @@ function setupDragDrop(zoneId, inputId, onFile) {
             if (data.error) { showToast(data.error, 'error'); return; }
 
             // Display result
-            document.getElementById('result-stego-img').src = data.stego_image;
-            document.getElementById('metric-psnr').textContent = data.psnr + ' dB';
+            document.getElementById('result-stego-img').src = data.stego_image || '';
+            document.getElementById('metric-psnr').textContent = data.psnr + (data.cover_type === 'image' ? ' dB' : '');
             document.getElementById('metric-ssim').textContent = data.ssim;
-            document.getElementById('metric-robust').textContent = data.robustness + '%';
+            document.getElementById('metric-robust').textContent = data.robustness + (data.cover_type === 'image' ? '%' : '');
             document.getElementById('model-badge-text').textContent = data.model_used;
 
-            // Download link
-            const dl = document.getElementById('download-stego');
-            dl.href = data.stego_image;
-            dl.download = 'stego_' + coverFile.name.split('.')[0] + '.png';
+            // Show correct download button
+            const dlImg = document.getElementById('download-stego');
+            const dl3d = document.getElementById('download-stego-3d');
 
+            if (data.cover_type === 'image') {
+                dlImg.href = data.stego_image;
+                dlImg.download = data.stego_filename || 'stego.png';
+                dlImg.style.display = 'inline-flex';
+                dl3d.style.display = 'none';
+            } else {
+                // 3D stego
+                window._stego3dData = data.stego_3d_data;
+                window._stego3dFilename = data.stego_filename || ('stego.' + data.stego_ext);
+                dlImg.style.display = 'none';
+                dl3d.style.display = 'inline-flex';
+                // Show a 3D file icon in the preview slot
+                document.getElementById('result-stego-img').style.display = 'none';
+            }
             show('hide-result');
             document.getElementById('hide-result').scrollIntoView({ behavior: 'smooth' });
         } catch (e) {
@@ -304,3 +330,17 @@ document.getElementById('btn-share')?.addEventListener('click', () => {
         showToast('Link copied to clipboard!', 'info');
     }
 });
+
+// Download stego 3D file
+function downloadStego3D() {
+    const b64 = window._stego3dData;
+    const fname = window._stego3dFilename || 'stego_3d.bin';
+    if (!b64) { showToast('No stego 3D data available.', 'error'); return; }
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname; a.click();
+    URL.revokeObjectURL(url);
+    showToast('3D stego file downloaded!', 'info');
+}
