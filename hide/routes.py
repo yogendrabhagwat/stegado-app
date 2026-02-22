@@ -6,8 +6,8 @@ from flask_login import login_required, current_user
 from hide import hide_bp
 from extensions import db
 from models import History
-from utils.image_utils import (
-    embed_secret, compute_robustness_score,
+from utils.neural_stego import (
+    neural_embed, compute_robustness_score,
     secret_text_to_bytes, secret_image_to_bytes, secret_3d_to_bytes
 )
 from PIL import Image
@@ -69,13 +69,13 @@ def process():
             return jsonify({'error': 'Unknown secret type.'}), 400
 
         # ── Embed ─────────────────────────────────────────────────────────────
-        stego_img, psnr, ssim = embed_secret(cover_img, secret_bytes, password)
+        stego_img, psnr, ssim = neural_embed(cover_img, secret_bytes, password)
         robustness = compute_robustness_score(psnr, ssim)
         try:
             from core.model_loader import get_active_model
             model_label = get_active_model(cover_mode)
         except Exception:
-            model_label = f'{cover_mode} (Signal-Processing Engine)'
+            model_label = f'{cover_mode} (Neural Fourier AI)'
 
         # ── Encode stego as base64 PNG ────────────────────────────────────────
         buf = io.BytesIO()

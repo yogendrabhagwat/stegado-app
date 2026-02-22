@@ -3,8 +3,7 @@ from flask_login import login_required, current_user
 from extract import extract_bp
 from extensions import db
 from models import History
-from utils.image_utils import extract_secret, bytes_to_secret
-from core.model_loader import get_active_model
+from utils.neural_stego import neural_extract, bytes_to_secret
 from PIL import Image
 
 
@@ -29,15 +28,21 @@ def process():
             return jsonify({'error': 'Password must be at least 4 characters.'}), 400
 
         stego_img = Image.open(stego_file.stream)
-        raw_bytes = extract_secret(stego_img, password)
+        raw_bytes = neural_extract(stego_img, password)
         result = bytes_to_secret(raw_bytes)
 
         # Save history
+        try:
+            from core.model_loader import get_active_model
+            model_label = get_active_model('Universal')
+        except Exception:
+            model_label = 'Neural Fourier AI'
+
         entry = History(
             user_id=current_user.id,
             operation='extract',
             file_name=stego_file.filename,
-            model_used=get_active_model('Universal'),
+            model_used=model_label,
             result_type=result.get('type', 'text'),
         )
         db.session.add(entry)
@@ -45,5 +50,7 @@ def process():
 
         return jsonify({'success': True, 'result': result})
 
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': f'Extraction failed: {str(e)}'}), 400
