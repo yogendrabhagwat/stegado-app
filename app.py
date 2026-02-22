@@ -8,9 +8,15 @@ def create_app():
     app = Flask(__name__)
 
     # ── Config ────────────────────────────────────────────────────────────────
+    # Support both local SQLite and Railway/cloud environment
+    db_url = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(os.getcwd(), "instance", "database.db")}')
+    # Railway sometimes provides postgres:// (old format) — fix prefix
+    if db_url.startswith('postgres://'):
+        db_url = db_url.replace('postgres://', 'postgresql://', 1)
+
     app.config.update(
         SECRET_KEY=os.environ.get('SECRET_KEY', 'stegano-secret-change-me-in-prod-2024'),
-        SQLALCHEMY_DATABASE_URI='sqlite:///database.db',
+        SQLALCHEMY_DATABASE_URI=db_url,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         MAX_CONTENT_LENGTH=32 * 1024 * 1024,   # 32 MB upload limit
         WTF_CSRF_ENABLED=True,
@@ -63,7 +69,11 @@ def create_app():
 
     # ── Init DB ───────────────────────────────────────────────────────────────
     with app.app_context():
-        db.create_all()
+        try:
+            os.makedirs(app.instance_path, exist_ok=True)
+            db.create_all()
+        except Exception as e:
+            logging.warning(f'DB init warning: {e}')
 
     # ── Logging ───────────────────────────────────────────────────────────────
     logging.basicConfig(
